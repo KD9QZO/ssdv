@@ -23,34 +23,35 @@
 #include <string.h>
 #include "ssdv.h"
 
-void exit_usage()
-{
+
+
+void exit_usage() {
 	fprintf(stderr,
-		"\n"
-		"Usage: ssdv [-e|-d] [-n] [-t <percentage>] [-c <callsign>] [-i <id>] [-q <level>] [-l <length>] [<in file>] [<out file>]\n"
-		"\n"
-		"  -e Encode JPEG to SSDV packets.\n"
-		"  -d Decode SSDV packets to JPEG.\n"
-		"\n"
-		"  -n Encode packets with no FEC.\n"
-		"  -t For testing, drops the specified percentage of packets while decoding.\n"
-		"  -c Set the callign. Accepts A-Z 0-9 and space, up to 6 characters.\n"
-		"  -i Set the image ID (0-255).\n"
-		"  -q Set the JPEG quality level (0 to 7, defaults to 4).\n"
-		"  -l Set packet length in bytes (max: 256, default 256).\n"
-		"  -v Print data for each packet decoded.\n"
-		"\n"
-		"Packet Length\n"
-		"\n"
-		"The packet length must be specified for both encoding and decoding if not\n"
-		"the default 256 bytes. Smaller packets will increase overhead.\n"
-		"\n");
+			"\n"
+			"\x1B[1mUsage:\x1B[0m ssdv [-e|-d] [-n] [-t <percentage>] [-c <callsign>] [-i <id>] [-q <level>] [-l <length>] [<in file>] [<out file>]\n"
+			"\n"
+			"  -e\t-- Encode JPEG to SSDV packets.\n"
+			"  -d\t-- Decode SSDV packets to JPEG.\n"
+			"\n"
+			"  -n\t-- Encode packets with no FEC.\n"
+			"  -t\t-- For testing, drops the specified percentage of packets while decoding.\n"
+			"  -c\t-- Set the callign. Accepts A-Z 0-9 and space, up to 6 characters.\n"
+			"  -i\t-- Set the image ID (0-255).\n"
+			"  -q\t-- Set the JPEG quality level (0 to 7, defaults to 4).\n"
+			"  -l\t-- Set packet length in bytes (max: 256, default 256).\n"
+			"  -v\t-- Print data for each packet decoded.\n"
+			"\n"
+			"\x1B[1mPacket Length\x1B[0m\n"
+			"\n"
+			"The packet length must be specified for both encoding and decoding if not\n"
+			"the default 256 bytes. Smaller packets will increase overhead.\n"
+			"\n");
 	exit(-1);
 }
 
-int main(int argc, char *argv[])
-{
-	int c, i;
+int main(int argc, char *argv[]) {
+	int c;
+	int i;
 	FILE *fin = stdin;
 	FILE *fout = stdout;
 	char encode = -1;
@@ -64,17 +65,17 @@ int main(int argc, char *argv[])
 	int pkt_length = SSDV_PKT_SIZE;
 	ssdv_t ssdv;
 	int skipped;
-	
-	uint8_t pkt[SSDV_PKT_SIZE], b[128], *jpeg;
+
+	uint8_t pkt[SSDV_PKT_SIZE];
+	uint8_t b[128];
+	uint8_t *jpeg;
 	size_t jpeg_length;
-	
+
 	callsign[0] = '\0';
-	
+
 	opterr = 0;
-	while((c = getopt(argc, argv, "ednc:i:q:l:t:v")) != -1)
-	{
-		switch(c)
-		{
+	while ((c = getopt(argc, argv, "ednc:i:q:l:t:v")) != -1) {
+		switch (c) {
 		case 'e': encode = 1; break;
 		case 'd': encode = 0; break;
 		case 'n': type = SSDV_TYPE_NOFEC; break;
@@ -94,49 +95,46 @@ int main(int argc, char *argv[])
 		case '?': exit_usage();
 		}
 	}
-	
+
 	c = argc - optind;
-	if(c > 2) exit_usage();
-	
-	for(i = 0; i < c; i++)
-	{
-		if(!strcmp(argv[optind + i], "-")) continue;
-		
-		switch(i)
-		{
+	if (c > 2) {
+		exit_usage();
+	}
+
+	for (i = 0; i < c; i++) {
+		if (!strcmp(argv[optind + i], "-")) {
+			continue;
+		}
+
+		switch (i) {
 		case 0:
 			fin = fopen(argv[optind + i], "rb");
-			if(!fin)
-			{
+			if (!fin) {
 				fprintf(stderr, "Error opening '%s' for input:\n", argv[optind + i]);
 				perror("fopen");
 				return(-1);
 			}
 			break;
-		
+
 		case 1:
 			fout = fopen(argv[optind + i], "wb");
-			if(!fout)         
-			{                 
+			if (!fout) {
 				fprintf(stderr, "Error opening '%s' for output:\n", argv[optind + i]);
-				perror("fopen");        
+				perror("fopen");
 				return(-1);
 			}
 			break;
 		}
 	}
-	
-	switch(encode)
-	{
+
+	switch (encode) {
 	case 0: /* Decode */
-		
-		if(droptest > 0) fprintf(stderr, "*** NOTE: Drop test enabled: %i ***\n", droptest);
-		
-		if(ssdv_dec_init(&ssdv, pkt_length) != SSDV_OK)
-		{
+		if (droptest > 0) fprintf(stderr, "*** NOTE: Drop test enabled: %i ***\n", droptest);
+
+		if (ssdv_dec_init(&ssdv, pkt_length) != SSDV_OK) {
 			return(-1);
 		}
-		
+
 		jpeg_length = 1024 * 1024 * 4;
 		jpeg = malloc(jpeg_length);
 		ssdv_dec_set_buffer(&ssdv, jpeg, jpeg_length);
@@ -245,19 +243,18 @@ int main(int argc, char *argv[])
 			fwrite(pkt, 1, pkt_length, fout);
 			i++;
 		}
-		
+
 		fprintf(stderr, "Wrote %i packets\n", i);
-		
+
 		break;
-	
+
 	default:
 		fprintf(stderr, "No mode specified.\n");
 		break;
 	}
-	
-	if(fin != stdin) fclose(fin);
-	if(fout != stdout) fclose(fout);
-	
-	return(0);
-}
 
+	if (fin != stdin) fclose(fin);
+	if (fout != stdout) fclose(fout);
+
+	return (0);
+}

@@ -16,13 +16,16 @@
 /* You should have received a copy of the GNU General Public License     */
 /* along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef SSDV_H_
+#define SSDV_H_
+
 #include <stdint.h>
 
-#ifndef INC_SSDV_H
-#define INC_SSDV_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 #define SSDV_ERROR       (-1)
 #define SSDV_OK          (0)
@@ -46,15 +49,15 @@ extern "C" {
 #define SSDV_TYPE_NORMAL  (0x00)
 #define SSDV_TYPE_NOFEC   (0x01)
 
-typedef struct
-{
+
+typedef struct {
 	/* Packet type configuration */
 	uint8_t type; /* 0 = Normal mode (nom. 224 byte packet + 32 bytes FEC),
 	                 1 = No-FEC mode (nom. 256 byte packet) */
 	uint16_t pkt_size_payload;
 	uint16_t pkt_size_crcdata;
 	int pkt_size;
-	
+
 	/* Image information */
 	uint16_t width;
 	uint16_t height;
@@ -67,26 +70,26 @@ typedef struct
 	uint8_t  quality;   /* JPEG quality level for encoding, 0-7         */
 	uint16_t packet_mcu_id;
 	uint8_t  packet_mcu_offset;
-	
+
 	/* Source buffer */
 	uint8_t *inp;      /* Pointer to next input byte                    */
 	size_t in_len;     /* Number of input bytes remaining               */
 	size_t in_skip;    /* Number of input bytes to skip                 */
-	
+
 	/* Source bits */
 	uint32_t workbits; /* Input bits currently being worked on          */
 	uint8_t worklen;   /* Number of bits in the input bit buffer        */
-	
+
 	/* JPEG / Packet output buffer */
 	uint8_t *out;      /* Pointer to the beginning of the output buffer */
 	uint8_t *outp;     /* Pointer to the next output byte               */
 	size_t out_len;    /* Number of output bytes remaining              */
 	char out_stuff;    /* Flag to add stuffing bytes to output          */
-	
+
 	/* Output bits */
 	uint32_t outbits;  /* Output bit buffer                             */
 	uint8_t outlen;    /* Number of bits in the output bit buffer       */
-	
+
 	/* JPEG decoder state */
 	enum {
 		S_MARKER = 0,
@@ -117,17 +120,18 @@ typedef struct
 	uint32_t reset_mcu; /* MCU block to do absolute encoding            */
 	uint32_t next_reset_mcu;
 	char needbits;      /* Number of bits needed to decode integer      */
-	
+
 	/* The input huffman and quantisation tables */
 	uint8_t stbls[TBL_LEN + HBUFF_LEN];
-	uint8_t *sdht[2][2], *sdqt[2];
+	uint8_t *sdht[2][2];
+	uint8_t *sdqt[2];
 	uint16_t stbl_len;
-	
+
 	/* The same for output */
 	uint8_t dtbls[TBL_LEN];
-	uint8_t *ddht[2][2], *ddqt[2];
+	uint8_t *ddht[2][2];
+	uint8_t *ddqt[2];
 	uint16_t dtbl_len;
-	
 } ssdv_t;
 
 typedef struct {
@@ -146,6 +150,7 @@ typedef struct {
 	uint16_t mcu_count;
 } ssdv_packet_info_t;
 
+
 /* Encoding */
 extern char ssdv_enc_init(ssdv_t *s, uint8_t type, char *callsign, uint8_t image_id, int8_t quality, int pkt_size);
 extern char ssdv_enc_set_buffer(ssdv_t *s, uint8_t *buffer);
@@ -161,8 +166,10 @@ extern char ssdv_dec_get_jpeg(ssdv_t *s, uint8_t **jpeg, size_t *length);
 extern char ssdv_dec_is_packet(uint8_t *packet, int pkt_size, int *errors);
 extern void ssdv_dec_header(ssdv_packet_info_t *info, uint8_t *packet);
 
+
 #ifdef __cplusplus
 }
 #endif
-#endif
 
+
+#endif	/* !SSDV_H_ */
