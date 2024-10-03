@@ -1,3 +1,16 @@
+#
+# .gitignore
+#
+
+## BACKUP & TEMPORARY FILES ##
+
+*~
+*.bak
+*.tmp
+
+
+## PROJECT-SPECIFIC FILES ##
+
 ssdv
 *.o
 *.jpeg
