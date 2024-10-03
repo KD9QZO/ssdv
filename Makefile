@@ -1,20 +1,42 @@
+#
+# Makefile for ssdv
+#
 
-CC=gcc
-CFLAGS=-g -O3 -Wall
-LDFLAGS=-g
+PRJ := ssdv
 
-all: ssdv
+CC  ?= gcc
+CXX ?= g++
 
-ssdv: main.o ssdv.o rs8.o ssdv.h rs8.h
-	$(CC) $(LDFLAGS) main.o ssdv.o rs8.o -o ssdv
+
+OPTLVL ?= 3
+DBGLVL ?= 
+CSTD   ?= gnu11
+CXXSTD ?= gnu++14
+
+DEFINES :=
+
+
+CFLAGS  := -g$(DBGLVL) -O$(OPTLVL) -std=$(CSTD) -Wall $(DEFINES)
+LDFLAGS := -g$(DBGLVL)
+
+
+OBJS := main.o ssdv.o rs8.o
+HDRS := ssdv.h rs8.h
+
+
+all: $(PRJ)
+
+ssdv: $(OBJS) $(HDRS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $(PRJ)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
 install: all
 	mkdir -p ${DESTDIR}/usr/bin
-	install -m 755 ssdv ${DESTDIR}/usr/bin
+	install -m 755 $(PRJ) ${DESTDIR}/usr/bin
 
 clean:
-	rm -f *.o ssdv
+	rm -f *.o
+	rm -f $(PRJ)
 
